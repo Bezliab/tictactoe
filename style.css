@@ -2,13 +2,13 @@
    DESIGN TOKENS & THEME
    ========================================= */
 :root {
-  --x-color: #FF6B6B;
-  --o-color: #4ECDC4;
-  --draw-color: #A0A0B0;
-  --win-line-color: #FFD93D;
+  --x-color: #ff6b6b;
+  --o-color: #4ecdc4;
+  --draw-color: #a0a0b0;
+  --win-line-color: #ffd93d;
 
-  --font-display: 'Syne', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-display: "Syne", sans-serif;
+  --font-mono: "DM Mono", monospace;
 
   --radius-sm: 8px;
   --radius-md: 16px;
@@ -20,33 +20,33 @@
 }
 
 [data-theme="dark"] {
-  --bg: #0F0F14;
-  --bg-card: #17171F;
-  --bg-cell: #1E1E2A;
+  --bg: #0f0f14;
+  --bg-card: #17171f;
+  --bg-cell: #1e1e2a;
   --bg-cell-hover: #252535;
-  --border: rgba(255,255,255,0.08);
-  --border-active: rgba(255,255,255,0.18);
-  --text-primary: #F0F0F8;
-  --text-secondary: #7A7A9A;
-  --text-muted: #4A4A6A;
-  --shadow: 0 8px 32px rgba(0,0,0,0.5);
-  --shadow-card: 0 4px 20px rgba(0,0,0,0.4);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(255, 255, 255, 0.18);
+  --text-primary: #f0f0f8;
+  --text-secondary: #7a7a9a;
+  --text-muted: #4a4a6a;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
   --glow-x: rgba(255, 107, 107, 0.2);
   --glow-o: rgba(78, 205, 196, 0.2);
 }
 
 [data-theme="light"] {
-  --bg: #F0F0F8;
-  --bg-card: #FFFFFF;
-  --bg-cell: #F7F7FC;
-  --bg-cell-hover: #EDEDF8;
-  --border: rgba(0,0,0,0.08);
-  --border-active: rgba(0,0,0,0.16);
-  --text-primary: #1A1A2E;
+  --bg: #f0f0f8;
+  --bg-card: #ffffff;
+  --bg-cell: #f7f7fc;
+  --bg-cell-hover: #ededf8;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-active: rgba(0, 0, 0, 0.16);
+  --text-primary: #1a1a2e;
   --text-secondary: #6666888;
-  --text-muted: #AAAACC;
-  --shadow: 0 8px 32px rgba(0,0,0,0.12);
-  --shadow-card: 0 4px 20px rgba(0,0,0,0.08);
+  --text-muted: #aaaacc;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
   --glow-x: rgba(255, 107, 107, 0.12);
   --glow-o: rgba(78, 205, 196, 0.12);
 }
@@ -54,9 +54,17 @@
 /* =========================================
    RESET & BASE
    ========================================= */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html { font-size: 16px; }
+html {
+  font-size: 16px;
+}
 
 body {
   font-family: var(--font-display);
@@ -66,13 +74,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background var(--transition), color var(--transition);
+  transition:
+    background var(--transition),
+    color var(--transition);
   overflow-x: hidden;
 }
 
 /* Subtle grid background */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   background-image:
@@ -124,7 +134,9 @@ body::before {
   opacity: 0;
   pointer-events: none;
   transform: translateY(12px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 .screen.active {
   opacity: 1;
@@ -156,9 +168,15 @@ body::before {
   margin-bottom: 8px;
   line-height: 1;
 }
-.logo-x { color: var(--x-color); }
-.logo-dot { color: var(--text-muted); }
-.logo-o { color: var(--o-color); }
+.logo-x {
+  color: var(--x-color);
+}
+.logo-dot {
+  color: var(--text-muted);
+}
+.logo-o {
+  color: var(--o-color);
+}
 
 .title {
   font-size: 28px;
@@ -195,7 +213,7 @@ body::before {
   overflow: hidden;
 }
 .mode-btn::after {
-  content: '→';
+  content: "→";
   position: absolute;
   right: 20px;
   top: 50%;
@@ -238,8 +256,14 @@ body::before {
   animation: slideDown 0.25s ease;
 }
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .diff-label {
   font-size: 12px;
@@ -251,10 +275,12 @@ body::before {
 }
 .diff-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 .diff-btn {
-  flex: 1;
+  flex: 1 1 calc(50% - 8px);
+  min-width: 120px;
   padding: 10px;
   border-radius: var(--radius-sm);
   border: 2px solid var(--border);
@@ -296,7 +322,9 @@ body::before {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 8px 24px rgba(255, 107, 107, 0.35);
 }
-.start-btn:active { transform: scale(0.98); }
+.start-btn:active {
+  transform: scale(0.98);
+}
 
 /* =========================================
    GAME SCREEN
@@ -344,7 +372,9 @@ body::before {
   font-family: var(--font-mono);
   color: var(--text-secondary);
 }
-.spacer { width: 70px; }
+.spacer {
+  width: 70px;
+}
 
 /* Scoreboard */
 .scoreboard {
@@ -364,7 +394,9 @@ body::before {
   border-color: var(--border-active);
   box-shadow: 0 0 0 1px var(--border-active);
 }
-.draw-card { opacity: 0.7; }
+.draw-card {
+  opacity: 0.7;
+}
 .score-symbol {
   font-size: 22px;
   font-weight: 800;
@@ -385,9 +417,15 @@ body::before {
   font-weight: 800;
   line-height: 1;
 }
-.x-color { color: var(--x-color); }
-.o-color { color: var(--o-color); }
-.draw-color { color: var(--draw-color); }
+.x-color {
+  color: var(--x-color);
+}
+.o-color {
+  color: var(--o-color);
+}
+.draw-color {
+  color: var(--draw-color);
+}
 
 /* Turn Indicator */
 .turn-indicator {
@@ -414,7 +452,9 @@ body::before {
 /* =========================================
    BOARD
    ========================================= */
-.board-wrapper { position: relative; }
+.board-wrapper {
+  position: relative;
+}
 
 .board {
   display: grid;
@@ -440,7 +480,7 @@ body::before {
   user-select: none;
 }
 .cell::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at center, transparent 60%, transparent);
@@ -451,28 +491,44 @@ body::before {
   transform: scale(0.96);
   background: var(--bg-cell-hover);
 }
-.cell.taken { cursor: default; }
+.cell.taken {
+  cursor: default;
+}
 .cell.x {
   color: var(--x-color);
   border-color: color-mix(in srgb, var(--x-color) 30%, var(--border));
 }
 .cell.x::before {
-  background: radial-gradient(circle at center, var(--glow-x) 0%, transparent 70%);
+  background: radial-gradient(
+    circle at center,
+    var(--glow-x) 0%,
+    transparent 70%
+  );
 }
 .cell.o {
   color: var(--o-color);
   border-color: color-mix(in srgb, var(--o-color) 30%, var(--border));
 }
 .cell.o::before {
-  background: radial-gradient(circle at center, var(--glow-o) 0%, transparent 70%);
+  background: radial-gradient(
+    circle at center,
+    var(--glow-o) 0%,
+    transparent 70%
+  );
 }
 .cell.win-cell {
   animation: winPulse 0.5s ease forwards;
 }
 @keyframes winPulse {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.08); }
-  100% { transform: scale(1.04); }
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1.04);
+  }
 }
 
 /* Cell pop-in animation */
@@ -480,8 +536,14 @@ body::before {
   animation: cellPop var(--transition-bounce) forwards;
 }
 @keyframes cellPop {
-  0% { transform: scale(0.6); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Win Line SVG */
@@ -508,7 +570,9 @@ body::before {
   animation: drawLine 0.45s ease forwards;
 }
 @keyframes drawLine {
-  to { stroke-dashoffset: 0; }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 /* =========================================
@@ -527,7 +591,9 @@ body::before {
   font-weight: 700;
   animation: slideDown 0.3s ease;
 }
-.result-icon { font-size: 22px; }
+.result-icon {
+  font-size: 22px;
+}
 
 /* =========================================
    ACTION BUTTONS
@@ -565,32 +631,53 @@ body::before {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
 }
-.action-btn:active { transform: scale(0.97); }
+.action-btn:active {
+  transform: scale(0.97);
+}
 
 /* =========================================
    UTILITIES
    ========================================= */
-.hidden { display: none !important; }
+.hidden {
+  display: none !important;
+}
 
 /* =========================================
    RESPONSIVE
    ========================================= */
 @media (max-width: 480px) {
-  .home-card, .game-layout {
+  .home-card,
+  .game-layout {
     padding: 28px 20px;
     border-radius: var(--radius-lg);
   }
-  .logo { font-size: 44px; }
-  .title { font-size: 24px; }
-  .game-layout { gap: 14px; }
-  .board { gap: 8px; }
-  .cell { border-radius: var(--radius-sm); }
-  .spacer { width: 50px; }
+  .logo {
+    font-size: 44px;
+  }
+  .title {
+    font-size: 24px;
+  }
+  .game-layout {
+    gap: 14px;
+  }
+  .board {
+    gap: 8px;
+  }
+  .cell {
+    border-radius: var(--radius-sm);
+  }
+  .spacer {
+    width: 50px;
+  }
 }
 
 @media (max-width: 360px) {
-  .score-value { font-size: 22px; }
-  .score-symbol { font-size: 18px; }
+  .score-value {
+    font-size: 22px;
+  }
+  .score-symbol {
+    font-size: 18px;
+  }
 }
 
 /* =========================================
@@ -600,9 +687,15 @@ body::before {
   animation: scoreBump 0.4s var(--transition-bounce);
 }
 @keyframes scoreBump {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Computer thinking indicator */
@@ -611,14 +704,14 @@ body::before {
   pointer-events: none;
 }
 .thinking .cell:not(.taken)::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(
     45deg,
     transparent,
     transparent 4px,
-    rgba(255,255,255,0.03) 4px,
-    rgba(255,255,255,0.03) 8px
+    rgba(255, 255, 255, 0.03) 4px,
+    rgba(255, 255, 255, 0.03) 8px
   );
 }

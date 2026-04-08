@@ -4,10 +4,12 @@
  */
 
 (() => {
+  const DEFAULT_LEVEL_KEY = "easy";
+
   /* ── State ─────────────────────────────────────────────── */
   const state = {
-    mode: null, // 'pvp' | 'pvc'
-    difficulty: "easy", // 'easy' | 'hard'
+    mode: null,
+    difficulty: DEFAULT_LEVEL_KEY,
     board: Array(9).fill(null),
     currentPlayer: "X",
     scores: { X: 0, O: 0, draw: 0 },
@@ -25,7 +27,7 @@
     pvpBtn: $("pvpBtn"),
     pvcBtn: $("pvcBtn"),
     diffSection: $("difficultySection"),
-    diffBtns: document.querySelectorAll(".diff-btn"),
+    diffButtons: $("diffButtons"),
     startBtn: $("startBtn"),
     backBtn: $("backBtn"),
     gameModeLabel: $("gameModeLabel"),
@@ -48,10 +50,17 @@
     newMatchBtn: $("newMatchBtn"),
   };
 
-  /* ── Theme ──────────────────────────────────────────────── */
+  const availableLevels = Array.isArray(window.GAME_LEVELS)
+    ? window.GAME_LEVELS
+    : [];
+
+  /* ── Init ───────────────────────────────────────────────── */
+  renderDifficultyButtons();
+
   let theme = localStorage.getItem("ttt-theme") || "dark";
   applyTheme(theme);
 
+  /* ── Theme ──────────────────────────────────────────────── */
   el.themeToggle.addEventListener("click", () => {
     theme = theme === "dark" ? "light" : "dark";
     applyTheme(theme);
@@ -59,11 +68,10 @@
     Sounds.click();
   });
 
-  function applyTheme(t) {
-    document.documentElement.setAttribute("data-theme", t);
-    // Use Font Awesome icons instead of emoji
+  function applyTheme(nextTheme) {
+    document.documentElement.setAttribute("data-theme", nextTheme);
     el.themeIcon.innerHTML =
-      t === "dark"
+      nextTheme === "dark"
         ? '<i class="fa-solid fa-sun"></i>'
         : '<i class="fa-solid fa-moon"></i>';
   }
@@ -73,6 +81,7 @@
     selectMode("pvp");
     Sounds.click();
   });
+
   el.pvcBtn.addEventListener("click", () => {
     selectMode("pvc");
     Sounds.click();
@@ -86,14 +95,44 @@
     el.startBtn.classList.remove("hidden");
   }
 
-  el.diffBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      el.diffBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      state.difficulty = btn.dataset.diff;
-      Sounds.click();
+  function renderDifficultyButtons() {
+    if (!el.diffButtons || !availableLevels.length) return;
+
+    el.diffButtons.innerHTML = availableLevels
+      .map(
+        (level) => `
+      <button
+        class="diff-btn ${level.key === state.difficulty ? "active" : ""}"
+        data-diff="${level.key}"
+        title="${level.description}"
+        type="button"
+      >
+        ${level.label}
+      </button>
+    `,
+      )
+      .join("");
+
+    el.diffButtons.querySelectorAll(".diff-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        setDifficulty(button.dataset.diff);
+        Sounds.click();
+      });
     });
-  });
+  }
+
+  function setDifficulty(levelKey) {
+    state.difficulty = levelKey;
+    el.diffButtons.querySelectorAll(".diff-btn").forEach((button) => {
+      button.classList.toggle("active", button.dataset.diff === levelKey);
+    });
+  }
+
+  function getSelectedLevel() {
+    return window.getGameLevel
+      ? window.getGameLevel(state.difficulty)
+      : availableLevels[0];
+  }
 
   el.startBtn.addEventListener("click", () => {
     if (!state.mode) return;
@@ -103,20 +142,18 @@
 
   /* ── Game Start ─────────────────────────────────────────── */
   function startGame() {
-    // Reset scores on fresh game start
     state.scores = { X: 0, O: 0, draw: 0 };
     updateScoreDisplay();
 
-    // Labels
     if (state.mode === "pvp") {
       el.nameX.textContent = "Player 1";
       el.nameO.textContent = "Player 2";
       el.gameModeLabel.textContent = "Player vs Player";
     } else {
+      const level = getSelectedLevel();
       el.nameX.textContent = "You";
-      el.nameO.textContent =
-        state.difficulty === "hard" ? "AI (Hard)" : "AI (Easy)";
-      el.gameModeLabel.textContent = `vs Computer · ${state.difficulty}`;
+      el.nameO.textContent = level.aiLabel;
+      el.gameModeLabel.textContent = `vs Computer · ${level.label}`;
     }
 
     switchScreen("game");
@@ -129,7 +166,6 @@
     switchScreen("home");
   });
 
-  /* ── Screen Switch ──────────────────────────────────────── */
   function switchScreen(name) {
     el.homeScreen.classList.toggle("active", name === "home");
     el.gameScreen.classList.toggle("active", name === "game");
@@ -162,14 +198,13 @@
   /* ── Cell Click ─────────────────────────────────────────── */
   el.cells.forEach((cell) => {
     cell.addEventListener("click", () =>
-      handleCellClick(parseInt(cell.dataset.index)),
+      handleCellClick(Number(cell.dataset.index)),
     );
   });
 
   function handleCellClick(index) {
     if (state.gameOver || state.isThinking) return;
     if (state.board[index] !== null) return;
-    // In PvC, only human (X) can click
     if (state.mode === "pvc" && state.currentPlayer === "O") return;
 
     placeMove(index, state.currentPlayer);
@@ -188,7 +223,6 @@
       state.currentPlayer = state.currentPlayer === "X" ? "O" : "X";
       updateTurnIndicator();
 
-      // Trigger AI move
       if (state.mode === "pvc" && state.currentPlayer === "O") {
         triggerAIMove();
       }
@@ -200,7 +234,9 @@
     state.isThinking = true;
     el.board.classList.add("thinking");
 
-    const delay = state.difficulty === "hard" ? 500 : 350;
+    const level = getSelectedLevel();
+    const delay = level.thinkingTime ?? 350;
+
     setTimeout(() => {
       const move = AI.getBestMove([...state.board], "O", state.difficulty);
       state.isThinking = false;
@@ -215,9 +251,8 @@
     if (winner) {
       const combo = AI.getWinningCombo(state.board);
       highlightWinner(combo);
-      state.scores[winner]++;
+      state.scores[winner] += 1;
       updateScoreDisplay(winner);
-      // Use trophy for human win, robot for computer
       showResult(
         winner === "X" ? "fa-solid fa-trophy" : "fa-solid fa-robot",
         getWinMessage(winner),
@@ -226,14 +261,16 @@
       state.gameOver = true;
       return true;
     }
-    if (state.board.every((v) => v !== null)) {
-      state.scores.draw++;
+
+    if (state.board.every((value) => value !== null)) {
+      state.scores.draw += 1;
       updateScoreDisplay("draw");
       showResult("fa-solid fa-handshake", "It's a Draw!");
       Sounds.draw();
       state.gameOver = true;
       return true;
     }
+
     return false;
   }
 
@@ -245,7 +282,6 @@
   }
 
   /* ── Winning Line ───────────────────────────────────────── */
-  // Maps combo patterns to SVG line coordinates in a 3×3 viewBox
   const LINE_COORDS = {
     "012": { x1: 0.5, y1: 0.5, x2: 2.5, y2: 0.5 },
     345: { x1: 0.5, y1: 1.5, x2: 2.5, y2: 1.5 },
@@ -258,20 +294,20 @@
   };
 
   function highlightWinner(combo) {
-    combo.forEach((i) => el.cells[i].classList.add("win-cell"));
+    combo.forEach((index) => el.cells[index].classList.add("win-cell"));
 
     const key = [...combo].sort((a, b) => a - b).join("");
     const coords = LINE_COORDS[key];
+
     if (coords) {
       const { x1, y1, x2, y2 } = coords;
       el.winLine.setAttribute("x1", x1);
       el.winLine.setAttribute("y1", y1);
       el.winLine.setAttribute("x2", x2);
       el.winLine.setAttribute("y2", y2);
-      // Estimate stroke-dasharray length in viewBox units
-      const len = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-      el.winLine.style.strokeDasharray = len;
-      el.winLine.style.strokeDashoffset = len;
+      const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+      el.winLine.style.strokeDasharray = length;
+      el.winLine.style.strokeDashoffset = length;
       el.winLine.classList.add("visible");
     }
   }
@@ -287,17 +323,16 @@
     if (bumped === "draw") bump(el.scoreDraw);
   }
 
-  function bump(el) {
-    el.classList.remove("score-bump");
-    void el.offsetWidth;
-    el.classList.add("score-bump");
+  function bump(element) {
+    element.classList.remove("score-bump");
+    void element.offsetWidth;
+    element.classList.add("score-bump");
   }
 
   /* ── Turn Indicator ─────────────────────────────────────── */
   function updateTurnIndicator() {
-    const p = state.currentPlayer;
-    const isX = p === "X";
-    el.turnBadge.textContent = p;
+    const isX = state.currentPlayer === "X";
+    el.turnBadge.textContent = state.currentPlayer;
     el.turnBadge.className = `turn-badge ${isX ? "x-color" : "o-color"}`;
 
     if (state.mode === "pvp") {
@@ -312,7 +347,6 @@
 
   /* ── Result Banner ──────────────────────────────────────── */
   function showResult(icon, text) {
-    // icon is a Font Awesome class string, set as innerHTML
     el.resultIcon.innerHTML = `<i class="${icon}"></i>`;
     el.resultText.textContent = text;
     el.resultBanner.classList.remove("hidden");
@@ -327,11 +361,11 @@
   el.newMatchBtn.addEventListener("click", () => {
     Sounds.click();
     switchScreen("home");
-    // Reset mode selection
     el.pvpBtn.classList.remove("selected");
     el.pvcBtn.classList.remove("selected");
     el.diffSection.classList.add("hidden");
     el.startBtn.classList.add("hidden");
     state.mode = null;
+    setDifficulty(DEFAULT_LEVEL_KEY);
   });
 })();

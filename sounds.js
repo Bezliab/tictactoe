@@ -15,7 +15,13 @@ const Sounds = (() => {
     return ctx;
   }
 
-  function playTone({ type = 'sine', freq = 440, duration = 0.12, gain = 0.18, ramp = true } = {}) {
+  function playTone({
+    type = "sine",
+    freq = 440,
+    duration = 0.12,
+    gain = 0.18,
+    ramp = true,
+  } = {}) {
     if (!enabled) return;
     try {
       const ac = getCtx();
@@ -25,25 +31,31 @@ const Sounds = (() => {
       g.connect(ac.destination);
       osc.type = type;
       osc.frequency.setValueAtTime(freq, ac.currentTime);
-      if (ramp) osc.frequency.exponentialRampToValueAtTime(freq * 0.85, ac.currentTime + duration);
+      if (ramp)
+        osc.frequency.exponentialRampToValueAtTime(
+          freq * 0.85,
+          ac.currentTime + duration,
+        );
       g.gain.setValueAtTime(gain, ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
       osc.start(ac.currentTime);
       osc.stop(ac.currentTime + duration);
-    } catch (e) { /* silent fail */ }
+    } catch (e) {
+      /* silent fail */
+    }
   }
 
   return {
     click() {
-      playTone({ type: 'triangle', freq: 520, duration: 0.08, gain: 0.14 });
+      playTone({ type: "triangle", freq: 520, duration: 0.08, gain: 0.14 });
     },
 
     placeX() {
-      playTone({ type: 'square', freq: 380, duration: 0.1, gain: 0.1 });
+      playTone({ type: "square", freq: 380, duration: 0.1, gain: 0.1 });
     },
 
     placeO() {
-      playTone({ type: 'sine', freq: 480, duration: 0.1, gain: 0.12 });
+      playTone({ type: "sine", freq: 480, duration: 0.1, gain: 0.12 });
     },
 
     win() {
@@ -56,7 +68,7 @@ const Sounds = (() => {
           const g = ac.createGain();
           osc.connect(g);
           g.connect(ac.destination);
-          osc.type = 'triangle';
+          osc.type = "triangle";
           osc.frequency.value = freq;
           const start = ac.currentTime + i * 0.1;
           g.gain.setValueAtTime(0, start);
@@ -77,7 +89,7 @@ const Sounds = (() => {
           const g = ac.createGain();
           osc.connect(g);
           g.connect(ac.destination);
-          osc.type = 'sawtooth';
+          osc.type = "sawtooth";
           osc.frequency.value = freq;
           const start = ac.currentTime + i * 0.12;
           g.gain.setValueAtTime(0.1, start);
@@ -88,6 +100,8 @@ const Sounds = (() => {
       } catch (e) {}
     },
 
-    toggle(val) { enabled = val; }
+    toggle(val) {
+      enabled = val;
+    },
   };
 })();
