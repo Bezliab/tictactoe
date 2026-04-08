@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span class="theme-icon" id="themeIcon">☀</span>
+  </button>
+
+  <!-- HOME SCREEN -->
+  <div class="screen active" id="homeScreen">
+    <div class="home-card">
+      <div class="logo">
+        <span class="logo-x">X</span>
+        <span class="logo-dot">·</span>
+        <span class="logo-o">O</span>
+      </div>
+      <h1 class="title">Tic Tac Toe</h1>
+      <p class="subtitle">Choose your battle mode</p>
+
+      <div class="mode-buttons">
+        <button class="mode-btn" id="pvpBtn">
+          <span class="mode-icon">👤 👤</span>
+          <span class="mode-label">Player vs Player</span>
+          <span class="mode-desc">Local 2-player match</span>
+        </button>
+        <button class="mode-btn" id="pvcBtn">
+          <span class="mode-icon">👤 🤖</span>
+          <span class="mode-label">Player vs Computer</span>
+          <span class="mode-desc">Challenge the AI</span>
+        </button>
+      </div>
+
+      <div class="difficulty-section hidden" id="difficultySection">
+        <p class="diff-label">Select Difficulty</p>
+        <div class="diff-buttons">
+          <button class="diff-btn active" data-diff="easy">Easy</button>
+          <button class="diff-btn" data-diff="hard">Hard</button>
+        </div>
+      </div>
+
+      <button class="start-btn hidden" id="startBtn">Start Game →</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="screen" id="gameScreen">
+    <div class="game-layout">
+
+      <div class="game-header">
+        <button class="back-btn" id="backBtn">← Home</button>
+        <div class="game-title" id="gameModeLabel">Player vs Player</div>
+        <div class="spacer"></div>
+      </div>
+
+      <div class="scoreboard">
+        <div class="score-card" id="scoreX">
+          <div class="score-symbol x-color">X</div>
+          <div class="score-name" id="nameX">Player 1</div>
+          <div class="score-value" id="scoreValueX">0</div>
+        </div>
+        <div class="score-card draw-card">
+          <div class="score-symbol draw-color">—</div>
+          <div class="score-name">Draw</div>
+          <div class="score-value" id="scoreValueDraw">0</div>
+        </div>
+        <div class="score-card" id="scoreO">
+          <div class="score-symbol o-color">O</div>
+          <div class="score-name" id="nameO">Player 2</div>
+          <div class="score-value" id="scoreValueO">0</div>
+        </div>
+      </div>
+
+      <div class="turn-indicator" id="turnIndicator">
+        <span class="turn-text" id="turnText">Player 1's turn</span>
+        <span class="turn-badge x-color" id="turnBadge">X</span>
+      </div>
+
+      <div class="board-wrapper">
+        <div class="board" id="board">
+          <div class="cell" data-index="0"></div>
+          <div class="cell" data-index="1"></div>
+          <div class="cell" data-index="2"></div>
+          <div class="cell" data-index="3"></div>
+          <div class="cell" data-index="4"></div>
+          <div class="cell" data-index="5"></div>
+          <div class="cell" data-index="6"></div>
+          <div class="cell" data-index="7"></div>
+          <div class="cell" data-index="8"></div>
+          <svg class="win-line-svg" id="winLineSvg" viewBox="0 0 3 3" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <line id="winLine" x1="0" y1="0" x2="0" y2="0" stroke-linecap="round" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="result-banner hidden" id="resultBanner">
+        <span class="result-icon" id="resultIcon">🎉</span>
+        <span class="result-text" id="resultText">Player 1 Wins!</span>
+      </div>
+
+      <div class="action-buttons">
+        <button class="action-btn secondary" id="restartBtn">↺ Restart Round</button>
+        <button class="action-btn primary" id="newMatchBtn">✦ New Match</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="sounds.js"></script>
+  <script src="ai.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
