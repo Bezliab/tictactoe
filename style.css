@@ -43,7 +43,7 @@
   --border: rgba(0, 0, 0, 0.08);
   --border-active: rgba(0, 0, 0, 0.16);
   --text-primary: #1a1a2e;
-  --text-secondary: #6666888;
+  --text-secondary: #666688;
   --text-muted: #aaaacc;
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -130,6 +130,7 @@ body::before {
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto;
   z-index: 10;
   opacity: 0;
   pointer-events: none;
@@ -148,6 +149,7 @@ body::before {
    HOME SCREEN
    ========================================= */
 .home-card {
+  margin: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -330,6 +332,7 @@ body::before {
    GAME SCREEN
    ========================================= */
 .game-layout {
+  margin: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -633,6 +636,134 @@ body::before {
 }
 .action-btn:active {
   transform: scale(0.97);
+}
+
+/* =========================================
+   ONLINE LOBBY
+   ========================================= */
+.online-section {
+  margin-bottom: 24px;
+  animation: slideDown 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.online-choice,
+.online-wait {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.online-btn {
+  padding: 13px 18px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+  background: var(--bg-cell);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.online-btn:hover:not(:disabled) {
+  border-color: var(--o-color);
+  background: color-mix(in srgb, var(--o-color) 8%, var(--bg-cell));
+}
+.online-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.online-or {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.join-row {
+  display: flex;
+  gap: 8px;
+}
+.code-input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+  background: var(--bg-cell);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  letter-spacing: 3px;
+  text-align: center;
+  transition: border-color var(--transition);
+}
+.code-input::placeholder {
+  letter-spacing: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.code-input:focus {
+  outline: none;
+  border-color: var(--o-color);
+}
+.code-display {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: 6px;
+  padding: 16px 8px;
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--border-active);
+  background: var(--bg-cell);
+  color: var(--text-primary);
+  user-select: all;
+}
+.online-status {
+  min-height: 18px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+.online-status.error {
+  color: var(--x-color);
+}
+.online-cancel {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.online-cancel:hover {
+  color: var(--text-primary);
+}
+
+/* Online: opponent's turn / round over */
+.board.not-your-turn .cell {
+  cursor: not-allowed;
+}
+.board.not-your-turn .cell:hover:not(.taken) {
+  transform: none;
+  border-color: var(--border);
+  background: var(--bg-cell);
+}
+.action-btn:disabled,
+.action-btn:disabled:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 480px) {
+  .code-display {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
 }
 
 /* =========================================

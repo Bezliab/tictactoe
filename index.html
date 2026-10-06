@@ -51,11 +51,70 @@
             <span class="mode-label">Player vs AI</span>
             <span class="mode-desc">Challenge the computer</span>
           </button>
+          <button class="mode-btn" id="onlineBtn">
+            <span class="mode-icon"
+              ><i class="fa-solid fa-globe"></i>
+              <i class="fa-solid fa-user-group"></i
+            ></span>
+            <span class="mode-label">Play Online</span>
+            <span class="mode-desc">Play a friend anywhere with a code</span>
+          </button>
         </div>
 
         <div class="difficulty-section hidden" id="difficultySection">
           <p class="diff-label">Select Difficulty</p>
           <div class="diff-buttons" id="diffButtons"></div>
+        </div>
+
+        <div class="online-section hidden" id="onlineSection">
+          <!-- Step 1: choose -->
+          <div class="online-choice" id="onlineChoice">
+            <button class="online-btn" id="createRoomBtn" type="button">
+              <i class="fa-solid fa-plus"></i> Create game
+            </button>
+            <div class="online-or">or join with a code</div>
+            <div class="join-row">
+              <input
+                class="code-input"
+                id="joinCodeInput"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="8"
+                placeholder="8-digit code"
+                aria-label="8-digit game code"
+              />
+              <button class="online-btn" id="joinRoomBtn" type="button">
+                Join
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2 (host): share the code -->
+          <div class="online-wait hidden" id="onlineHost">
+            <p class="diff-label">Share this code with your friend</p>
+            <div class="code-display" id="codeDisplay" aria-live="polite">
+              ········
+            </div>
+            <button class="online-btn" id="copyCodeBtn" type="button" disabled>
+              <i class="fa-regular fa-copy"></i> Copy code
+            </button>
+          </div>
+
+          <!-- Step 2 (guest): connecting -->
+          <div class="online-wait hidden" id="onlineJoining">
+            <p class="diff-label">Connecting…</p>
+          </div>
+
+          <p class="online-status" id="onlineStatus" role="status"></p>
+
+          <button
+            class="online-cancel hidden"
+            id="onlineCancelBtn"
+            type="button"
+          >
+            Cancel
+          </button>
         </div>
 
         <button class="start-btn hidden" id="startBtn">
@@ -149,6 +208,8 @@
     <script src="sounds.js"></script>
     <script src="levels.js"></script>
     <script src="ai.js"></script>
+    <script src="peerjs.min.js"></script>
+    <script src="online.js"></script>
     <script src="game.js"></script>
   </body>
 </html>
