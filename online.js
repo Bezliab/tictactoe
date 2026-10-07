@@ -21,20 +21,62 @@ const Online = (() => {
   const ID_PREFIX = "bezliab-ttt-";
   const CODE_LENGTH = 8;
   const MAX_ID_RETRIES = 6;
-  const JOIN_TIMEOUT_MS = 15000;
+  const JOIN_TIMEOUT_MS = 20000;
+  const JOIN_LOOKUP_RETRIES = 3; // re-ask if the room isn't found (host may be reconnecting)
+  const JOIN_LOOKUP_GAP_MS = 2500;
+  const RECONNECT_GAP_MS = 2000;
   const PING_EVERY_MS = 4000;
   const SILENCE_LIMIT_MS = 13000;
 
   /*
    * ICE servers. STUN alone connects most players; some strict networks
    * (mobile carriers with symmetric NAT, corporate Wi-Fi) also need a TURN
-   * relay. To add one, push an entry here, e.g.
-   *   { urls: "turn:your.turn.host:3478", username: "...", credential: "..." }
+   * relay: add one in online-config.js (no need to edit this file).
    */
-  const ICE_SERVERS = [
+  const BASE_ICE_SERVERS = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
   ];
+  const ICE_FETCH_TIMEOUT_MS = 4000;
+  const ICE_CACHE_MS = 20 * 60 * 1000; // credentials last 1h; refresh well before
+
+  let fetchedIce = []; // short-lived TURN credentials from your Worker
+  let fetchedIceAt = 0;
+
+  function configuredIce() {
+    return Array.isArray(window.ONLINE_ICE_SERVERS) ? window.ONLINE_ICE_SERVERS : [];
+  }
+
+  /*
+   * If online-config.js has a credentials endpoint (your Metered URL),
+   * fetch the TURN server list from it. Never throws:
+   * on any failure we simply carry on with STUN only.
+   */
+  async function loadTurnCredentials() {
+    const url = window.ONLINE_ICE_ENDPOINT;
+    if (!url) return;
+    if (fetchedIce.length && Date.now() - fetchedIceAt < ICE_CACHE_MS) return;
+    const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = setTimeout(() => ctrl && ctrl.abort(), ICE_FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, { cache: "no-store", signal: ctrl && ctrl.signal });
+      if (!res.ok) throw new Error("bad status");
+      const data = await res.json();
+      // Metered returns a plain array; some services wrap it as { iceServers }.
+      const list = Array.isArray(data) ? data : data && data.iceServers;
+      if (Array.isArray(list) && list.length) {
+        fetchedIce = list.filter((s) => s && s.urls);
+        fetchedIceAt = Date.now();
+      } else {
+        throw new Error("no ICE servers in response");
+      }
+    } catch (e) {
+      // Not fatal: carry on with STUN only (direct connections).
+      console.warn("[online] Couldn't load TURN credentials:", e && e.message);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
   let peer = null;
   let conn = null;
@@ -42,6 +84,8 @@ const Online = (() => {
   let pingTimer = null;
   let watchdog = null;
   let joinTimer = null;
+  let reconnectTimer = null;
+  let wakeLock = null;
   let lastHeard = 0;
   let closedByUs = false;
   let session = 0; // bumps on every host/join/leave so stale events are ignored
@@ -70,7 +114,12 @@ const Online = (() => {
   }
 
   function peerOptions() {
-    return { debug: 0, config: { iceServers: ICE_SERVERS } };
+    return {
+      debug: 0,
+      config: {
+        iceServers: [...BASE_ICE_SERVERS, ...configuredIce(), ...fetchedIce],
+      },
+    };
   }
 
   function libraryMissing() {
@@ -83,7 +132,9 @@ const Online = (() => {
     clearInterval(pingTimer);
     clearInterval(watchdog);
     clearTimeout(joinTimer);
-    pingTimer = watchdog = joinTimer = null;
+    clearTimeout(reconnectTimer);
+    pingTimer = watchdog = joinTimer = reconnectTimer = null;
+    releaseWakeLock();
     const old = { conn, peer };
     conn = null;
     peer = null;
@@ -160,6 +211,46 @@ const Online = (() => {
     callbacks.onError && callbacks.onError(message);
   }
 
+  /* ── Keep the screen awake while waiting for a friend ────── */
+  async function requestWakeLock() {
+    try {
+      if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen");
+    } catch (e) {
+      /* not supported / denied: harmless */
+    }
+  }
+  function releaseWakeLock() {
+    try {
+      wakeLock && wakeLock.release();
+    } catch (e) {}
+    wakeLock = null;
+  }
+
+  /*
+   * The public matchmaking server forgets a room if the host's connection to
+   * it drops (very common on phones when the browser is backgrounded, e.g.
+   * while pasting the code into WhatsApp). Re-register the same code.
+   */
+  function keepRoomAlive(p, mySession) {
+    if (mySession !== session || p !== peer || conn) return;
+    if (p.destroyed || !p.disconnected) return;
+    cb.onStatus && cb.onStatus("Reconnecting your game…");
+    try {
+      p.reconnect();
+    } catch (e) {}
+    clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(
+      () => keepRoomAlive(p, mySession),
+      RECONNECT_GAP_MS,
+    );
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden || !peer || conn) return;
+    requestWakeLock();
+    keepRoomAlive(peer, session);
+  });
+
   /* ── Host ────────────────────────────────────────────────── */
   function host(callbacks) {
     teardown();
@@ -180,16 +271,19 @@ const Online = (() => {
       peer = p;
 
       p.on("open", () => {
-        if (mySession !== session) return;
+        if (mySession !== session || p !== peer) return;
+        clearTimeout(reconnectTimer);
+        requestWakeLock();
         cb.onCode && cb.onCode(code);
       });
 
       p.on("connection", (incoming) => {
-        if (mySession !== session) return;
-        // Room is for exactly two players: turn away anyone else.
+        if (mySession !== session || p !== peer) return;
+        cb.onStatus && !conn && cb.onStatus("Your friend is connecting…");
         incoming.on("open", () => {
           if (mySession !== session) return;
           if (conn) {
+            // Room is for exactly two players: turn away anyone else.
             try {
               incoming.send({ t: "full" });
             } catch (e) {}
@@ -198,12 +292,14 @@ const Online = (() => {
           }
           attachConnection(incoming, mySession, "host");
           send({ t: "welcome" });
+          releaseWakeLock();
           cb.onConnected && cb.onConnected();
         });
       });
 
       p.on("error", (err) => {
         if (mySession !== session || p !== peer) return;
+
         if (err.type === "unavailable-id" && attempts < MAX_ID_RETRIES) {
           // Someone else already holds this code: pick another.
           attempts += 1;
@@ -213,20 +309,42 @@ const Online = (() => {
           open();
           return;
         }
-        fail(describeError(err), mySession);
+
+        // Once a match is running, stray signalling errors don't matter:
+        // the players are talking directly.
+        if (conn) return;
+
+        switch (err.type) {
+          // A guest's connection attempt failed. That's THEIR problem, not
+          // the room's: keep the room open so they (or someone else) can retry.
+          case "webrtc":
+          case "peer-unavailable":
+            cb.onStatus &&
+              cb.onStatus("A connection attempt failed. Still waiting…");
+            return;
+          // Trouble talking to the matchmaking server: try to get back in.
+          case "network":
+          case "server-error":
+          case "socket-error":
+          case "socket-closed":
+            keepRoomAlive(p, mySession);
+            return;
+          default:
+            fail(describeError(err), mySession);
+        }
       });
 
-      p.on("disconnected", () => {
-        // Lost the matchmaking server. Fine once the game is connected
-        // (we talk directly); before that, try to get back online.
-        if (mySession !== session || conn) return;
-        try {
-          p.reconnect();
-        } catch (e) {}
+      p.on("disconnected", () => keepRoomAlive(p, mySession));
+
+      p.on("close", () => {
+        if (mySession !== session || p !== peer || conn) return;
+        fail("Your game room closed. Create a new game.", mySession);
       });
     };
 
-    open();
+    loadTurnCredentials().then(() => {
+      if (mySession === session) open();
+    });
   }
 
   /* ── Join ────────────────────────────────────────────────── */
@@ -246,37 +364,69 @@ const Online = (() => {
       return;
     }
 
+    loadTurnCredentials().then(() => {
+      if (mySession === session) start();
+    });
+
+    function start() {
     const p = new window.Peer(peerOptions());
     peer = p;
+    let lookups = 0;
+    let linked = false; // true once a data channel to the host is open
 
-    p.on("open", () => {
-      if (mySession !== session) return;
+    const attempt = () => {
+      if (mySession !== session || p !== peer) return;
+      lookups += 1;
       const connection = p.connect(ID_PREFIX + code, {
         reliable: true,
         serialization: "json",
       });
 
+      clearTimeout(joinTimer);
       joinTimer = setTimeout(() => {
         fail(
-          "Couldn't connect. Check the code, or try again (some networks block direct connections).",
+          "Couldn't connect. Your network may be blocking direct connections. Try again, or switch between Wi-Fi and mobile data.",
           mySession,
         );
       }, JOIN_TIMEOUT_MS);
 
       connection.on("open", () => {
         if (mySession !== session) return;
+        linked = true;
         // Connected to the room; we're "in" once the host sends "welcome".
         attachConnection(connection, mySession, "guest");
       });
-      connection.on("error", () =>
-        fail("Couldn't connect to that game.", mySession),
-      );
+      connection.on("error", () => {
+        if (!linked) fail("Couldn't connect to that game.", mySession);
+      });
+    };
+
+    p.on("open", () => {
+      if (mySession !== session || p !== peer) return;
+      attempt();
     });
 
     p.on("error", (err) => {
       if (mySession !== session || p !== peer) return;
+      if (linked) return; // match already running; ignore stray errors
+
+      if (err.type === "peer-unavailable") {
+        // The host may be mid-reconnect to the matchmaking server: ask again.
+        if (lookups < JOIN_LOOKUP_RETRIES) {
+          cb.onStatus && cb.onStatus("Looking for that game…");
+          clearTimeout(joinTimer);
+          joinTimer = setTimeout(attempt, JOIN_LOOKUP_GAP_MS);
+          return;
+        }
+        fail(
+          "No game found with that code. Check it, and make sure the host is still on the waiting screen.",
+          mySession,
+        );
+        return;
+      }
       fail(describeError(err), mySession);
     });
+    }
   }
 
   function describeError(err) {

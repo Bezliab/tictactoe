@@ -729,6 +729,11 @@ body::before {
 .online-status.error {
   color: var(--x-color);
 }
+.online-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
 .online-cancel {
   background: none;
   border: none;

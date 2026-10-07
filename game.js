@@ -505,6 +505,9 @@
     onConnected() {
       startOnlineGame();
     },
+    onStatus(message) {
+      setOnlineStatus(message);
+    },
     onMessage: handleOnlineMessage,
     onDisconnected: handleOnlineDisconnect,
     onError(message) {
